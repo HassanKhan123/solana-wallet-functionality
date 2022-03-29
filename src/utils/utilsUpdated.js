@@ -2,6 +2,7 @@ import { clusterApiUrl, Connection, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import crypto from "crypto-js";
 import * as Bip39 from "bip39";
 import * as web3 from "@solana/web3.js";
+import b58 from "b58";
 
 import {
   COMMITMENT,
@@ -110,13 +111,22 @@ export const initialTasks = async (
   let hashedPassword = await getStorageSyncValue("hashedPassword");
   const mnemonic = await decryptMessage(encData, hashedPassword);
   let secret;
+  let seed;
+  let importedAccount;
 
   if (firstUser.secretKey) {
     secret = await decryptMessage(firstUser.secretKey, hashedPassword);
   }
 
-  const seed = Bip39.mnemonicToSeedSync(mnemonic).slice(0, 32);
-  const importedAccount = web3.Keypair.fromSeed(seed);
+  let split = mnemonic.split(" ");
+
+  if (split.length > 1) {
+    seed = Bip39.mnemonicToSeedSync(mnemonic).slice(0, 32);
+    importedAccount = web3.Keypair.fromSeed(seed);
+  } else {
+    const address = b58.decode(mnemonic);
+    importedAccount = web3.Keypair.fromSecretKey(address);
+  }
 
   return {
     accountsList,

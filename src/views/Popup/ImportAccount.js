@@ -24,10 +24,8 @@ const ImportAccount = () => {
       const address = b58.decode(privateKey);
       const account = Keypair.fromSecretKey(address);
 
-      console.log("ad=====", address, account);
-
       let userInfo = await getStorageSyncValue("userInfo");
-      const publicKey = account.publicKey;
+      const publicKey = account.publicKey.toString();
       let addresses = Object.keys(userInfo[currentWalletName]["accounts"]);
       let isExist = false;
       addresses.map(adr => {

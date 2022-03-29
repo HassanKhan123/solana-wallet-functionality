@@ -153,6 +153,11 @@ const Dashboard = () => {
     setAddress(accountAddress);
     const { accountsList, firstUser, importedAccount, mnemonic, secret } =
       await initialTasks(currentWalletName, accountAddress);
+    let balance = await fetchBalance(
+      CURRENT_NETWORK,
+      importedAccount.publicKey
+    );
+    setBalance(balance);
     const allTokens = await showAllHoldings(firstUser.address);
 
     dispatch({
@@ -167,6 +172,7 @@ const Dashboard = () => {
       payload: allTokens,
     });
     setKeypair(importedAccount);
+    setPrivateKey(secret || mnemonic);
   };
 
   return (
@@ -194,6 +200,9 @@ const Dashboard = () => {
       <button onClick={createAccount}>Create Account</button>
       <Link to="/send">
         <button>Send</button>
+      </Link>
+      <Link to="/import-account">
+        <button>Import Account</button>
       </Link>
 
       <h2>Your Holdings</h2>
