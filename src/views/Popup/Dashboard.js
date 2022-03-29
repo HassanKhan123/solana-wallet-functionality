@@ -160,7 +160,7 @@ const Dashboard = () => {
       <h2>Your Holdings</h2>
       <ul>
         {allTokens.map(tk => (
-          <li>
+          <li key={tk.address}>
             {tk.name} - {tk.amount} {tk.symbol}
           </li>
         ))}
