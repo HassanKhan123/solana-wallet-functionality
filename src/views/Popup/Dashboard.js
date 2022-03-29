@@ -9,6 +9,7 @@ import * as ed25519 from "ed25519-hd-key";
 
 import {
   decryptMessage,
+  encryptMessage,
   fetchBalance,
   getStorageSyncValue,
   handleAirdrop,
@@ -105,27 +106,27 @@ const Dashboard = () => {
     let userInfo = await getStorageSyncValue("userInfo");
     let numOfAccs = Object.keys(userInfo[currentWalletName]["accounts"]).length;
     const account = accountFromSeed(seedPhrase, Number(numOfAccs) + 1);
-    // userInfo[currentWalletName]["accounts"] = {
-    //     ...userInfo[currentWalletName]["accounts"],
-    //     [account.publicKey.toString()]: {
-    //       data: wallet.getPrivateKey().toString("hex"),
-    //       address,
-    //       ethereumTokens: [],
-    //       polygonTokens: [],
-    //       maticTokens: [],
-    //     },
-    //   };
-    console.log(
-      "ACCOUNT============",
-      account
-      //   account.publicKey.toString(),
-      //   b58.encode(account.secretKey)
+    let hashedPassword = await getStorageSyncValue("hashedPassword");
+
+    const ciphertext = encryptMessage(
+      b58.encode(account.secretKey),
+      hashedPassword
     );
+    userInfo[currentWalletName]["accounts"] = {
+      ...userInfo[currentWalletName]["accounts"],
+      [account.publicKey.toString()]: {
+        data: ciphertext,
+        address,
+        keypair: account,
+      },
+    };
+    setAllAccounts(userInfo[currentWalletName]["accounts"]);
+    await setStorageSyncValue("userInfo", userInfo);
   };
 
   const accountFromSeed = (seed, walletIndex) => {
     const derivedSeed = deriveSeed(seed, walletIndex);
-    console.log("DER---------", deriveSeed);
+    console.log("DER---------", derivedSeed);
     const keyPair = nacl.sign.keyPair.fromSeed(derivedSeed);
 
     const acc = new web3.Keypair(keyPair);
@@ -138,6 +139,26 @@ const Dashboard = () => {
     return ed25519.derivePath(path44Change, seed).key;
   };
 
+  const changeAccount = async e => {
+    // let accountAddress = e.target.value;
+    // dispatch({
+    //   type: SWITCH_ACCOUNT,
+    //   payload: accountAddress,
+    // });
+    // if (allAccounts[accountAddress]) {
+    //   let encData = allAccounts[accountAddress].data;
+    //   const { privateKey, address } = await decrypt(encData, encryptedPassword);
+    //   if (privateKey && address) {
+    //     setAddress(address);
+    //     setPrivateKey(privateKey);
+    //   } else {
+    //     setCurrentAccount(allAccounts[accountAddress]);
+    //     setAddress(allAccounts[accountAddress].address);
+    //     setPrivateKey("0x" + allAccounts[accountAddress].data);
+    //   }
+    // }
+  };
+
   return (
     <>
       <Link to="/change-wallet">
@@ -147,6 +168,14 @@ const Dashboard = () => {
       <h3 style={{ overflowWrap: "break-word" }}>PRIVATE KEY: {privateKey}</h3>
       <h3 style={{ overflowWrap: "break-word" }}>Address: {address}</h3>
       <h3>SEED PHRASE: {seedPhrase}</h3>
+
+      <select onChange={e => changeAccount(e)}>
+        {Object.keys(allAccounts).map((add, i) => (
+          <option key={i} value={add}>
+            {add}
+          </option>
+        ))}
+      </select>
 
       <h4>Solana Balance: {balance} SOL</h4>
       {airdropLoading && <p>Loading!!!</p>}
