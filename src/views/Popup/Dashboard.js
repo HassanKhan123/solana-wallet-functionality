@@ -41,6 +41,9 @@ const Dashboard = () => {
   const allTokens = useSelector(
     ({ walletEncrypted }) => walletEncrypted?.allTokens
   );
+  const activeAccount = useSelector(
+    ({ walletEncrypted }) => walletEncrypted?.activeAccount
+  );
 
   const dispatch = useDispatch();
 
@@ -60,7 +63,10 @@ const Dashboard = () => {
       setAllAccounts(accountsList);
       dispatch({
         type: SWITCH_ACCOUNT,
-        payload: firstUser.address,
+        payload: {
+          address: firstUser.address,
+          keypair: importedAccount,
+        },
       });
       setKeypair(importedAccount);
 
@@ -70,7 +76,7 @@ const Dashboard = () => {
       setKeypair(firstUser.keypair);
       dispatch({
         type: SHOW_ALL_CUSTOM_TOKENS,
-        payload: [...allTokens],
+        payload: allTokens,
       });
     })();
   }, []);
@@ -90,11 +96,9 @@ const Dashboard = () => {
 
   const airdrop = async () => {
     setAirdropLoading(true);
-    const seed = Bip39.mnemonicToSeedSync(seedPhrase).slice(0, 32);
-    const importedAccount = web3.Keypair.fromSeed(seed);
     const updatedBalance = await handleAirdrop(
       CURRENT_NETWORK,
-      importedAccount.publicKey
+      activeAccount.keypair.publicKey
     );
     if (typeof updatedBalance === "number") {
       setBalance(updatedBalance);
@@ -105,7 +109,8 @@ const Dashboard = () => {
   const createAccount = async () => {
     let userInfo = await getStorageSyncValue("userInfo");
     let numOfAccs = Object.keys(userInfo[currentWalletName]["accounts"]).length;
-    const account = accountFromSeed(seedPhrase, Number(numOfAccs) + 1);
+    const seed = Bip39.mnemonicToSeedSync(seedPhrase).slice(0, 32);
+    const account = accountFromSeed(seed, Number(numOfAccs) + 1);
     let hashedPassword = await getStorageSyncValue("hashedPassword");
 
     const ciphertext = encryptMessage(
@@ -116,7 +121,7 @@ const Dashboard = () => {
       ...userInfo[currentWalletName]["accounts"],
       [account.publicKey.toString()]: {
         data: ciphertext,
-        address,
+        address: account.publicKey.toString(),
         keypair: account,
       },
     };
@@ -134,29 +139,34 @@ const Dashboard = () => {
   };
 
   const deriveSeed = (seed, walletIndex) => {
-    console.log("seed----------", seed);
-    const path44Change = `m/44'/501'/${walletIndex}'/0'`;
-    return ed25519.derivePath(path44Change, seed).key;
+    try {
+      console.log("seed----------", seed);
+      const path44Change = `m/44'/501'/${walletIndex}'/0'`;
+      return ed25519.derivePath(path44Change, seed).key;
+    } catch (error) {
+      console.log("err===", error);
+    }
   };
 
   const changeAccount = async e => {
-    // let accountAddress = e.target.value;
-    // dispatch({
-    //   type: SWITCH_ACCOUNT,
-    //   payload: accountAddress,
-    // });
-    // if (allAccounts[accountAddress]) {
-    //   let encData = allAccounts[accountAddress].data;
-    //   const { privateKey, address } = await decrypt(encData, encryptedPassword);
-    //   if (privateKey && address) {
-    //     setAddress(address);
-    //     setPrivateKey(privateKey);
-    //   } else {
-    //     setCurrentAccount(allAccounts[accountAddress]);
-    //     setAddress(allAccounts[accountAddress].address);
-    //     setPrivateKey("0x" + allAccounts[accountAddress].data);
-    //   }
-    // }
+    let accountAddress = e.target.value;
+    setAddress(accountAddress);
+    const { accountsList, firstUser, importedAccount, mnemonic, secret } =
+      await initialTasks(currentWalletName, accountAddress);
+    const allTokens = await showAllHoldings(firstUser.address);
+
+    dispatch({
+      type: SWITCH_ACCOUNT,
+      payload: {
+        address: firstUser.address,
+        keypair: importedAccount,
+      },
+    });
+    dispatch({
+      type: SHOW_ALL_CUSTOM_TOKENS,
+      payload: allTokens,
+    });
+    setKeypair(importedAccount);
   };
 
   return (

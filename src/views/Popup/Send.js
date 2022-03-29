@@ -36,31 +36,23 @@ const SendTokens = () => {
   const allTokens = useSelector(
     ({ walletEncrypted }) => walletEncrypted?.allTokens
   );
-
-  useEffect(() => {
-    (async () => {
-      const { accountsList, firstUser, importedAccount, mnemonic, secret } =
-        await initialTasks(currentWalletName);
-
-      setKeypair(importedAccount);
-
-      setAddress(firstUser.address);
-      setPrivateKey(secret);
-      setSeedPhrase(mnemonic);
-    })();
-  }, []);
+  const activeAccount = useSelector(
+    ({ walletEncrypted }) => walletEncrypted?.activeAccount
+  );
 
   const sendTransaction = async () => {
-    console.log(selectedAsset);
     const connection = new Connection(
       clusterApiUrl(CURRENT_NETWORK),
       COMMITMENT
     );
+
+    const publicKey = activeAccount.keypair.publicKey;
+    const secretKey = activeAccount.keypair.secretKey;
+
     try {
       if (selectedAsset === "") {
-        console.log("PARAMS===", keypair.publicKey);
         const instructions = SystemProgram.transfer({
-          fromPubkey: keypair.publicKey,
+          fromPubkey: publicKey,
           toPubkey: new PublicKey(receiver),
           lamports: amount * 1000000000,
         });
@@ -69,8 +61,8 @@ const SendTokens = () => {
 
         const signers = [
           {
-            publicKey: keypair.publicKey,
-            secretKey: keypair.secretKey,
+            publicKey,
+            secretKey,
           },
         ];
 
@@ -92,11 +84,11 @@ const SendTokens = () => {
           connection,
           USDC_pubkey,
           splToken.TOKEN_PROGRAM_ID,
-          keypair
+          activeAccount.keypair
         );
 
         var fromTokenAccount = await myToken.getOrCreateAssociatedAccountInfo(
-          keypair.publicKey
+          publicKey
         );
         var toTokenAccount = await myToken.getOrCreateAssociatedAccountInfo(
           new PublicKey(receiver)
@@ -107,7 +99,7 @@ const SendTokens = () => {
             splToken.TOKEN_PROGRAM_ID,
             fromTokenAccount.address,
             toTokenAccount.address,
-            keypair.publicKey,
+            publicKey,
             [],
             amount * 10 ** decimals
           )
@@ -116,10 +108,12 @@ const SendTokens = () => {
         var signature = await sendAndConfirmTransaction(
           connection,
           transaction,
-          [keypair]
+          [activeAccount.keypair]
         );
         console.log("SIGNATURE", signature);
-        console.log("SUCCESS");
+        navigate("/dashboard");
+
+        alert(`Transaction confirmed`);
       }
     } catch (error) {
       console.log(error);

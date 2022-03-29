@@ -5,6 +5,7 @@ import {
   REMOVE_MNEMONIC,
   SET_CURRENT_WALLET_NAME,
   SHOW_ALL_CUSTOM_TOKENS,
+  SWITCH_ACCOUNT,
 } from "../actionTypes";
 
 const initialState = {
@@ -12,6 +13,7 @@ const initialState = {
   wallet: null,
   currentWalletName: "wallet1",
   allTokens: [{ name: "Solana", symbol: "SOL" }],
+  activeAccount: {},
 };
 
 export default function (state = initialState, action) {
@@ -62,6 +64,12 @@ export default function (state = initialState, action) {
       return {
         ...state,
         allTokens: payload,
+      };
+
+    case SWITCH_ACCOUNT:
+      return {
+        ...state,
+        activeAccount: { ...payload },
       };
 
     default:

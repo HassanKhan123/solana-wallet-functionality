@@ -96,16 +96,25 @@ export const handleAirdrop = async (network, publicKey) => {
   }
 };
 
-export const initialTasks = async currentWalletName => {
+export const initialTasks = async (
+  currentWalletName,
+  currentAccountAddress = ""
+) => {
   let userInfo = await getStorageSyncValue("userInfo");
   let accountsList = userInfo[currentWalletName]["accounts"];
-  let firstUser = accountsList[Object.keys(accountsList)[0]];
+  let firstUser = currentAccountAddress
+    ? accountsList[currentAccountAddress]
+    : accountsList[Object.keys(accountsList)[0]];
 
   let encData = firstUser.data;
   let hashedPassword = await getStorageSyncValue("hashedPassword");
   const mnemonic = await decryptMessage(encData, hashedPassword);
+  let secret;
 
-  const secret = await decryptMessage(firstUser.secretKey, hashedPassword);
+  if (firstUser.secretKey) {
+    secret = await decryptMessage(firstUser.secretKey, hashedPassword);
+  }
+
   const seed = Bip39.mnemonicToSeedSync(mnemonic).slice(0, 32);
   const importedAccount = web3.Keypair.fromSeed(seed);
 
