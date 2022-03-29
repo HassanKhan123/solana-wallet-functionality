@@ -9,9 +9,11 @@ import {
   CURRENT_NETWORK,
   OPEN_IN_WEB,
   STORAGE,
+  USD_CACHE_TIME,
 } from "../constants";
 import { TokenListProvider } from "@solana/spl-token-registry";
 import * as splToken from "@solana/spl-token";
+import axios from "axios";
 
 export const getStorageSyncValue = async keyName => {
   try {
@@ -189,20 +191,41 @@ export const showAllHoldings = async address => {
   } else {
     return accounts;
   }
+};
 
-  // let response = await connection.getTokenAccountsByOwner(
-  //   new web3.PublicKey(account.publicKey), // owner here
-  //   {
-  //     programId: TOKEN_PROGRAM_ID,
-  //   }
-  // );
-  // response.value.forEach(e => {
-  //   console.log(`pubkey: ${e.pubkey.toBase58()}`);
-  //   const accountInfo = splToken.AccountLayout.decode(e.account.data);
-  //   console.log(`mint: ${new web3.PublicKey(accountInfo.mint)}`);
-  //   console.log(
-  //     `amount: ${splToken.u64.fromBuffer(accountInfo.amount)}`,
-  //     accountInfo
-  //   );
-  // });
+export const fetchUsdRate = async symbol => {
+  let usdRate;
+  let tokenPrice = JSON.parse(localStorage.getItem(symbol));
+  const now = new Date();
+
+  if (tokenPrice && tokenPrice.expiry > now.getTime()) {
+    console.log("FROM LOCAL=================");
+    usdRate = Number(tokenPrice.data);
+  } else {
+    usdRate = await fetchRates(symbol);
+
+    setDataWithExpiry(symbol, usdRate, USD_CACHE_TIME);
+  }
+
+  return usdRate;
+};
+
+export const fetchRates = async coinId => {
+  const { data } = await axios.get(
+    `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`
+  );
+
+  let id = coinId;
+
+  return data.hasOwnProperty(id.toLowerCase()) ? data[id.toLowerCase()].usd : 0;
+};
+
+export const setDataWithExpiry = (key, data, expiry) => {
+  const now = new Date();
+
+  const item = {
+    data,
+    expiry: now.getTime() + expiry,
+  };
+  localStorage.setItem(key, JSON.stringify(item));
 };

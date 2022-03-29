@@ -21,7 +21,8 @@ import {
   SHOW_ALL_CUSTOM_TOKENS,
   SWITCH_ACCOUNT,
 } from "../../redux/actionTypes";
-import { COMMITMENT, CURRENT_NETWORK } from "../../constants";
+import { COMMITMENT, CURRENT_NETWORK, SOLANA_SYMBOL } from "../../constants";
+import { fetchUsdRateOfTokens } from "../../redux/actions/walletActions";
 
 let connection;
 
@@ -43,6 +44,10 @@ const Dashboard = () => {
   );
   const activeAccount = useSelector(
     ({ walletEncrypted }) => walletEncrypted?.activeAccount
+  );
+
+  const solanaUsdPrice = useSelector(
+    ({ walletEncrypted }) => walletEncrypted?.solanaUsdPrice
   );
 
   const dispatch = useDispatch();
@@ -78,6 +83,7 @@ const Dashboard = () => {
         type: SHOW_ALL_CUSTOM_TOKENS,
         payload: allTokens,
       });
+      dispatch(fetchUsdRateOfTokens(SOLANA_SYMBOL));
     })();
   }, []);
 
@@ -193,7 +199,9 @@ const Dashboard = () => {
         ))}
       </select>
 
-      <h4>Solana Balance: {balance} SOL</h4>
+      <h4>
+        Solana Balance: {balance} SOL (${balance * solanaUsdPrice})
+      </h4>
       {airdropLoading && <p>Loading!!!</p>}
 
       <button onClick={airdrop}>Airdrop 1 SOL</button>

@@ -4,6 +4,7 @@ import {
   IMPORT_WALLET,
   REMOVE_MNEMONIC,
   SET_CURRENT_WALLET_NAME,
+  SET_SOLANA_USD_PRICE,
   SHOW_ALL_CUSTOM_TOKENS,
   SWITCH_ACCOUNT,
 } from "../actionTypes";
@@ -14,6 +15,7 @@ const initialState = {
   currentWalletName: "wallet1",
   allTokens: [{ name: "Solana", symbol: "SOL" }],
   activeAccount: {},
+  solanaUsdPrice: 0,
 };
 
 export default function (state = initialState, action) {
@@ -70,6 +72,12 @@ export default function (state = initialState, action) {
       return {
         ...state,
         activeAccount: { ...payload },
+      };
+
+    case SET_SOLANA_USD_PRICE:
+      return {
+        ...state,
+        solanaUsdPrice: payload,
       };
 
     default:

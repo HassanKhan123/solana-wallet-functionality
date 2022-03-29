@@ -11,3 +11,4 @@ export const CACHE_TIME = 60000;
 export const USD_CACHE_TIME = 120000;
 export const CURRENT_NETWORK = "devnet";
 export const COMMITMENT = "confirmed";
+export const SOLANA_SYMBOL = "solana";

@@ -6,24 +6,18 @@ import {
   SystemProgram,
   Transaction,
 } from "@solana/web3.js";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import * as splToken from "@solana/spl-token";
 
 import { Link, useNavigate } from "react-router-dom";
 import { COMMITMENT, CURRENT_NETWORK } from "../../constants";
 
-import { decrypt, getGasPrice } from "../../utils/utils";
-import { initialTasks } from "../../utils/utilsUpdated";
-
 let web3;
 let common;
 
 const SendTokens = () => {
-  const [privateKey, setPrivateKey] = useState("");
-  const [address, setAddress] = useState("");
-  const [seedPhrase, setSeedPhrase] = useState("");
-  const [keypair, setKeypair] = useState({});
+  const [loading, setLoading] = useState(false);
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState(0);
   const [selectedAsset, setSelectedAsset] = useState("");
@@ -41,6 +35,7 @@ const SendTokens = () => {
   );
 
   const sendTransaction = async () => {
+    setLoading(true);
     const connection = new Connection(
       clusterApiUrl(CURRENT_NETWORK),
       COMMITMENT
@@ -115,8 +110,11 @@ const SendTokens = () => {
 
         alert(`Transaction confirmed`);
       }
+      setLoading(false);
     } catch (error) {
-      console.log(error);
+      setLoading(false);
+      console.log(error.message);
+      alert(error.message);
     }
   };
 
@@ -146,7 +144,11 @@ const SendTokens = () => {
       />
 
       <>
-        <button onClick={sendTransaction}>Send</button>
+        {loading ? (
+          <p>Loading!!!</p>
+        ) : (
+          <button onClick={sendTransaction}>Send</button>
+        )}
         <Link to="/dashboard">Back</Link>
       </>
     </div>
