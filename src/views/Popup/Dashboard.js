@@ -4,10 +4,9 @@ import { Link } from "react-router-dom";
 import * as web3 from "@solana/web3.js";
 import b58 from "b58";
 import * as Bip39 from "bip39";
-import nacl from "tweetnacl";
-import * as ed25519 from "ed25519-hd-key";
 
 import {
+  accountFromSeed,
   decryptMessage,
   encryptMessage,
   fetchBalance,
@@ -133,25 +132,6 @@ const Dashboard = () => {
     };
     setAllAccounts(userInfo[currentWalletName]["accounts"]);
     await setStorageSyncValue("userInfo", userInfo);
-  };
-
-  const accountFromSeed = (seed, walletIndex) => {
-    const derivedSeed = deriveSeed(seed, walletIndex);
-    console.log("DER---------", derivedSeed);
-    const keyPair = nacl.sign.keyPair.fromSeed(derivedSeed);
-
-    const acc = new web3.Keypair(keyPair);
-    return acc;
-  };
-
-  const deriveSeed = (seed, walletIndex) => {
-    try {
-      console.log("seed----------", seed);
-      const path44Change = `m/44'/501'/${walletIndex}'/0'`;
-      return ed25519.derivePath(path44Change, seed).key;
-    } catch (error) {
-      console.log("err===", error);
-    }
   };
 
   const changeAccount = async e => {

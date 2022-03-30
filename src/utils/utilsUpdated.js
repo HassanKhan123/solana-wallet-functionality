@@ -6,6 +6,8 @@ import b58 from "b58";
 import axios from "axios";
 import { TokenListProvider } from "@solana/spl-token-registry";
 import * as splToken from "@solana/spl-token";
+import nacl from "tweetnacl";
+import * as ed25519 from "ed25519-hd-key";
 
 import tokensJSON from "../tokens.json";
 import {
@@ -244,4 +246,23 @@ export const setDataWithExpiry = (key, data, expiry) => {
     expiry: now.getTime() + expiry,
   };
   localStorage.setItem(key, JSON.stringify(item));
+};
+
+export const accountFromSeed = (seed, walletIndex) => {
+  const derivedSeed = deriveSeed(seed, walletIndex);
+  console.log("DER---------", derivedSeed);
+  const keyPair = nacl.sign.keyPair.fromSeed(derivedSeed);
+
+  const acc = new web3.Keypair(keyPair);
+  return acc;
+};
+
+export const deriveSeed = (seed, walletIndex) => {
+  try {
+    console.log("seed----------", seed);
+    const path44Change = `m/44'/501'/${walletIndex}'/0'`;
+    return ed25519.derivePath(path44Change, seed).key;
+  } catch (error) {
+    console.log("err===", error);
+  }
 };
