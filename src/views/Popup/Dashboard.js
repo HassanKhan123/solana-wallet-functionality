@@ -163,10 +163,6 @@ const Dashboard = () => {
 
   return (
     <>
-      <Link to="/change-wallet">
-        <h2>{currentWalletName}</h2>
-      </Link>
-
       <h3 style={{ overflowWrap: "break-word" }}>PRIVATE KEY: {privateKey}</h3>
       <h3 style={{ overflowWrap: "break-word" }}>Address: {address}</h3>
       <h3>SEED PHRASE: {seedPhrase}</h3>
