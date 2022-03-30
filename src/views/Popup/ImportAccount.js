@@ -68,6 +68,10 @@ const ImportAccount = () => {
       ) : (
         <button onClick={importAccount}>Import</button>
       )}
+      <button style={{ marginTop: 10 }} onClick={() => navigate("/dashboard")}>
+        {" "}
+        {"<"} Go Back
+      </button>
     </div>
   );
 };

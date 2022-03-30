@@ -27,6 +27,10 @@ const Recover = () => {
       try {
         setLoading(true);
         const inputMnemonic = seedPhrase.trim().toLowerCase();
+        const split = seedPhrase.split(" ");
+        if (split.length === 1) {
+          throw new Error("Invalid Seed Phrase");
+        }
         const seed = Bip39.mnemonicToSeedSync(inputMnemonic).slice(0, 32);
         const ciphertext = encryptMessage(inputMnemonic, password);
         const importedAccount = Keypair.fromSeed(seed);
