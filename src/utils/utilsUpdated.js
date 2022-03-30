@@ -3,7 +3,11 @@ import crypto from "crypto-js";
 import * as Bip39 from "bip39";
 import * as web3 from "@solana/web3.js";
 import b58 from "b58";
+import axios from "axios";
+import { TokenListProvider } from "@solana/spl-token-registry";
+import * as splToken from "@solana/spl-token";
 
+import tokensJSON from "../tokens.json";
 import {
   COMMITMENT,
   CURRENT_NETWORK,
@@ -11,9 +15,6 @@ import {
   STORAGE,
   USD_CACHE_TIME,
 } from "../constants";
-import { TokenListProvider } from "@solana/spl-token-registry";
-import * as splToken from "@solana/spl-token";
-import axios from "axios";
 
 export const getStorageSyncValue = async keyName => {
   try {
@@ -142,18 +143,32 @@ export const initialTasks = async (
 const fetchTokens = async ({ account }) => {
   console.log("a", account);
   let address = account.data.parsed.info.mint;
-  return new TokenListProvider().resolve().then(tokens => {
-    let tokenList = tokens.filterByClusterSlug(CURRENT_NETWORK).getList();
-    tokenList = tokenList
+  let { data } = await axios.get(
+    "https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/src/tokens/solana.tokenlist.json"
+  );
+  let tokenList = data.tokens;
+  // return new TokenListProvider().resolve().then(tokens => {
+
+  tokenList = await Promise.all(
+    tokenList
       .filter(tk => tk.address === address)
-      .map(tk => {
+      .map(async tk => {
         if (tk.address === address) {
           tk.amount = account.data.parsed.info.tokenAmount.uiAmount;
+          let symbol = tk.symbol.toLowerCase();
+
+          if (tokensJSON[symbol]) {
+            let usdPrice = await fetchRates(tokensJSON[symbol].id);
+            console.log("USD========", usdPrice);
+            tk.priceInUSD = (Number(tk.amount) * Number(usdPrice)).toFixed(4);
+            setDataWithExpiry(symbol, usdPrice, USD_CACHE_TIME);
+          }
           return tk;
         }
-      });
-    return tokenList.length > 0 ? tokenList : [];
-  });
+      })
+  );
+  return tokenList.length > 0 ? tokenList : [];
+  // });
 };
 
 export const showAllHoldings = async address => {
@@ -187,6 +202,7 @@ export const showAllHoldings = async address => {
       })
     );
 
+    console.log("AA=========", acc);
     return acc.flat();
   } else {
     return accounts;

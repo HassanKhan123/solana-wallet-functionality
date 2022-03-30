@@ -202,9 +202,12 @@ const Dashboard = () => {
       <h4>
         Solana Balance: {balance} SOL (${balance * solanaUsdPrice})
       </h4>
-      {airdropLoading && <p>Loading!!!</p>}
+      {airdropLoading ? (
+        <p>Loading!!!</p>
+      ) : (
+        <button onClick={airdrop}>Airdrop 1 SOL</button>
+      )}
 
-      <button onClick={airdrop}>Airdrop 1 SOL</button>
       <button onClick={createAccount}>Create Account</button>
       <Link to="/send">
         <button>Send</button>
@@ -215,9 +218,9 @@ const Dashboard = () => {
 
       <h2>Your Holdings</h2>
       <ul>
-        {allTokens.map(tk => (
+        {allTokens?.map(tk => (
           <li key={tk.address}>
-            {tk.name} - {tk.amount} {tk.symbol}
+            {tk.name} - {tk.amount} {tk.symbol} (${tk?.priceInUSD})
           </li>
         ))}
       </ul>
